@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: excel-matching-app
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+    # 환경 변수는 Render 대시보드에서 설정하세요:
+    # - ADDITIONAL_EXCEL_FILES
+    # - EXCEL_SHEET_NAME
+    # - DB_HOST
+    # - DB_PORT
+    # - DB_USER
+    # - DB_PASSWORD
+    # - DB_NAME
+    # - MSAL_CLIENT_ID
+    # - MSAL_TENANT_ID
+
+
+
+
+
+
+
+

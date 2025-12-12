@@ -1,0 +1,1391 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>개인정산 조회</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', Arial, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button {
+            font-family: inherit;
+        }
+
+        .header {
+            background-color: #fff;
+            border-bottom: 2px solid #ddd;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #8b0000;
+            text-transform: lowercase;
+        }
+
+        .logo-image {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            flex: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+
+        .main-content.admin-view-active {
+            max-width: 100%;
+            padding: 10px;
+            margin: 0;
+            height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .main-content.admin-view-active #admin-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .tab-section {
+            margin-bottom: 20px;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 0;
+            border: 2px solid #e74c3c;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .tab-item {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tab-item input[type="radio"] {
+            display: none;
+        }
+
+        .tab-label {
+            display: block;
+            padding: 12px 16px;
+            background-color: #fff;
+            border-right: 1px solid #e74c3c;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .tab-item:last-child .tab-label {
+            border-right: none;
+        }
+
+        .tab-item.active .tab-label,
+        .tab-item input[type="radio"]:checked + .tab-label {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .tab-item:hover .tab-label {
+            background-color: #f8f9fa;
+        }
+
+        .tab-item.active:hover .tab-label,
+        .tab-item input[type="radio"]:checked:hover + .tab-label {
+            background-color: #c0392b;
+        }
+
+        .query-section {
+            margin-bottom: 30px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .query-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .query-period {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .query-period label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .period-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 220px;
+        }
+
+        .select-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .select-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .query-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .btn-outline:hover {
+            background-color: #e74c3c;
+            color: #fff;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .summary-section {
+            margin-bottom: 0;
+        }
+
+        .summary-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .left-column-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .summary-table-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 460px;
+        }
+
+        .unsettled-right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 460px;
+        }
+
+        .unsettled-summary {
+            flex: 0 0 auto;
+            height: 95px;
+            min-height: 95px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .unsettled-total-card {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 115px;
+            min-height: 115px;
+            max-height: 115px;
+            overflow: hidden;
+            border: 1px solid #c0392b;
+            border-radius: 6px;
+        }
+
+        .unsettled-total-header {
+            background-color: #c0392b;
+            color: #fff;
+            padding: 12px 16px;
+            font-weight: 700;
+        }
+
+        .unsettled-total-value {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 700;
+            color: #c0392b;
+            background: #fff5f3;
+        }
+
+        .summary-table-container,
+        .detail-table-container,
+        .unsettled-summary,
+        .admin-table-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-table-container .summary-table {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #34495e;
+            padding: 12px 16px;
+            color: white;
+        }
+
+        .table-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .admin-table-wrapper {
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #ecf0f1;
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        tfoot td {
+            font-weight: bold;
+            background-color: #fff3cd;
+        }
+
+        #settled-detail-table tfoot td:nth-child(5),
+        #unsettled-detail-table tfoot td:nth-child(5),
+        #totalAmountCell,
+        #total-unsettled-detail {
+            text-align: center;
+            padding-left: 0;
+            padding-right: 0;
+            /* 리사이즈 시 너비가 동적으로 설정되므로 여기서는 제거 */
+        }
+
+        .summary-table tbody {
+            display: block;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .summary-table tbody,
+        .detail-table tbody,
+        .admin-table tbody {
+            display: block;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        /* 월별 정산 요약 테이블 스크롤 및 합계 행 고정 */
+        .summary-table-container {
+            min-height: 0;
+        }
+
+        #monthly-summary-table {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            min-height: 0;
+        }
+
+        #monthly-summary-table thead {
+            flex-shrink: 0;
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        #monthly-summary-table tbody {
+            flex: 0 0 auto;
+            display: block;
+            overflow-y: auto;
+            max-height: 200px; /* 5개 행이 보이도록 고정 (각 행 약 40px) */
+            min-height: 200px;
+            height: 200px;
+        }
+
+        #monthly-summary-table tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        #monthly-summary-table tfoot {
+            flex-shrink: 0;
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+
+        .summary-table thead,
+        .summary-table tfoot,
+        .summary-table tbody tr,
+        .detail-table thead,
+        .detail-table tfoot,
+        .detail-table tbody tr,
+        .admin-table thead,
+        .admin-table tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        /* 월별 정산 요약 테이블 컬럼 너비 설정 */
+        #monthly-summary-table th:nth-child(1),
+        #monthly-summary-table td:nth-child(1) {
+            position: relative;
+            width: auto;
+        }
+
+        #monthly-summary-table th:nth-child(2),
+        #monthly-summary-table td:nth-child(2) {
+            position: relative;
+            width: 15%;
+            text-align: left;
+        }
+
+        /* 월 정산 상세 내역, 미정산 상세 내역 컬럼 너비 설정 */
+        #settled-detail-table th:nth-child(1),
+        #settled-detail-table td:nth-child(1),
+        #unsettled-detail-table th:nth-child(1),
+        #unsettled-detail-table td:nth-child(1) {
+            width: 8%;
+        }
+
+        /* 정산월 헤더 줄바꿈 방지 */
+        #settled-detail-table th:nth-child(1) {
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        #settled-detail-table th:nth-child(1) .filter-icon {
+            flex-shrink: 0;
+        }
+
+        .admin-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .admin-section .section-title {
+            flex-shrink: 0;
+        }
+
+        .admin-controls {
+            flex-shrink: 0;
+        }
+
+        #excel-pagination,
+        #excel-page-info {
+            flex-shrink: 0;
+        }
+
+        .admin-table-wrapper {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* flex 컨테이너 내에서 스크롤 작동을 위해 필요 */
+            width: 100%;
+            padding: 0;
+        }
+
+        #settled-detail-table th:nth-child(2),
+        #settled-detail-table td:nth-child(2),
+        #unsettled-detail-table th:nth-child(2),
+        #unsettled-detail-table td:nth-child(2) {
+            width: 10%;
+        }
+
+        #settled-detail-table th:nth-child(3),
+        #settled-detail-table td:nth-child(3),
+        #unsettled-detail-table th:nth-child(3),
+        #unsettled-detail-table td:nth-child(3) {
+            width: 15%;
+        }
+
+        #settled-detail-table th:nth-child(4),
+        #settled-detail-table td:nth-child(4),
+        #unsettled-detail-table th:nth-child(4),
+        #unsettled-detail-table td:nth-child(4) {
+            width: 15%;
+        }
+
+        #settled-detail-table th:nth-child(5),
+        #settled-detail-table td:nth-child(5),
+        #unsettled-detail-table th:nth-child(5),
+        #unsettled-detail-table td:nth-child(5) {
+            text-align: right;
+            position: relative;
+        }
+
+        #settled-detail-table th:nth-child(6),
+        #settled-detail-table td:nth-child(6),
+        #unsettled-detail-table th:nth-child(6),
+        #unsettled-detail-table td:nth-child(6) {
+            text-align: left;
+            position: relative;
+        }
+
+        /* 컬럼 리사이즈 핸들 */
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background-color: transparent;
+            z-index: 10;
+            user-select: none;
+        }
+
+        .resize-handle:hover {
+            background-color: #4a90e2;
+        }
+
+        .resize-handle.active {
+            background-color: #4a90e2;
+        }
+
+        /* 리사이즈 중 테이블 선택 방지 */
+        .detail-table.resizing {
+            user-select: none;
+            cursor: col-resize;
+        }
+
+        .detail-table.resizing * {
+            cursor: col-resize !important;
+        }
+
+        .unsettled-summary {
+            border: 2px solid #e74c3c;
+            flex-shrink: 0;
+        }
+
+        .unsettled-right-column .summary-table-container {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .unsettled-summary .table-header {
+            background-color: #e74c3c;
+        }
+
+        .unsettled-amount {
+            padding: 0;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #e74c3c;
+            text-align: center;
+            background-color: #fdf2f2;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-section {
+            margin-top: -100px;
+            margin-bottom: 30px;
+        }
+        
+        .detail-section .section-title:first-child {
+            margin-top: -20px;
+        }
+
+        .detail-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .admin-section {
+            margin-top: 0;
+        }
+
+        .admin-section .section-title {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+
+        .admin-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .admin-controls select,
+        .admin-controls input {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .pagination {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .page-info {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-card {
+            background: #fff;
+            padding: 24px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 420px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .auth-desc {
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .table-placeholder {
+            padding: 40px 20px;
+            text-align: center;
+            color: #777;
+        }
+
+        .admin-table-wrapper {
+            padding: 0;
+            min-height: 0; /* flex 컨테이너 내에서 스크롤 작동을 위해 필요 */
+        }
+
+        .admin-table {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-table thead {
+            flex-shrink: 0;
+        }
+
+        .admin-table tbody {
+            flex: 1;
+            min-height: 0; /* flex 컨테이너 내에서 스크롤 작동을 위해 필요 */
+        }
+
+
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+
+            .header-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .query-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .query-buttons {
+                justify-content: center;
+            }
+
+            .summary-container {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-container {
+                flex-direction: column;
+            }
+
+            .tab-container {
+                flex-direction: column;
+            }
+
+            .tab-item .tab-label {
+                border-right: none;
+                border-bottom: 1px solid #e74c3c;
+            }
+
+            .tab-item:last-child .tab-label {
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 10px;
+            }
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .logo-text {
+                font-size: 1.3rem;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .summary-table tbody,
+            .detail-table tbody,
+            .admin-table tbody {
+                max-height: 320px;
+            }
+
+            th,
+            td {
+                font-size: 12px;
+                padding: 6px 8px;
+            }
+
+            .unsettled-amount {
+                font-size: 1.2rem;
+                padding: 15px;
+            }
+        }
+
+        .amount-cell {
+            text-align: right;
+            padding-right: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .total-title {
+            text-align: right;
+            font-weight: bold;
+            white-space: nowrap;
+            padding-right: 12px;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .sortable:hover {
+            background-color: #d5d8dc;
+        }
+
+        .sortable.asc::after,
+        .sortable.desc::after {
+            content: "";
+        }
+
+        /* 필터 아이콘 스타일 */
+        .filterable {
+            position: relative;
+        }
+
+        .filterable th {
+            position: relative;
+        }
+
+.filterable th {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+.filterable th > span:first-child {
+            flex: 1;
+            min-width: 0;
+            font-size: 14px;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .filter-icon {
+            cursor: pointer;
+            width: 12px;
+            height: 12px;
+            min-width: 12px;
+            min-height: 12px;
+            max-width: 12px;
+            max-height: 12px;
+            flex-shrink: 0;
+            user-select: none;
+            transition: opacity 0.2s, transform 0.2s;
+            opacity: 0.6;
+            vertical-align: middle;
+            display: inline-block;
+            margin-left: 4px;
+            align-self: center;
+            overflow: visible;
+            box-sizing: border-box;
+        }
+
+        .filter-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .filter-icon.active {
+            opacity: 1;
+        }
+
+        .filter-icon.active path,
+        .filter-icon.active rect {
+            stroke: #0078d4;
+        }
+
+        /* 필터 드롭다운 메뉴 */
+        .filter-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 200px;
+            max-width: 300px;
+            height: 320px;
+            max-height: 320px;
+            display: none;
+            flex-direction: column;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+
+        .filter-dropdown.active {
+            display: flex;
+        }
+
+        .filter-search {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+            height: 40px;
+            box-sizing: border-box;
+        }
+
+        .filter-search input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        .filter-search input::placeholder {
+            color: #999;
+        }
+
+        .filter-options {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 4px 0;
+            height: 240px;
+            max-height: 240px;
+        }
+
+        .filter-option {
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .filter-option:hover {
+            background-color: #f0f0f0;
+        }
+
+        .filter-option input[type="checkbox"] {
+            cursor: pointer;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .filter-option label {
+            cursor: pointer;
+            flex: 1;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0;
+        }
+
+        /* 계층 구조 스타일 */
+        .filter-option.parent {
+            font-weight: 500;
+        }
+
+        .filter-option.child {
+            padding-left: 24px;
+        }
+
+        .filter-expand-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 10px;
+            color: #666;
+        }
+
+        .filter-expand-icon:hover {
+            background-color: #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .filter-actions {
+            padding: 6px 8px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+            background-color: #f9f9f9;
+            flex-shrink: 0;
+            height: 40px;
+            min-height: 40px;
+            max-height: 40px;
+            box-sizing: border-box;
+            align-items: center;
+        }
+
+        .filter-actions button {
+            padding: 4px 12px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+            background: white;
+            min-width: 50px;
+            max-width: 50px;
+            height: 24px;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .filter-actions button:hover {
+            background-color: #f0f0f0;
+        }
+
+        .filter-actions .btn-confirm {
+            background-color: #0078d4;
+            color: white;
+            border-color: #0078d4;
+        }
+
+        .filter-actions .btn-confirm:hover {
+            background-color: #005a9e;
+        }
+
+        .filter-actions .btn-cancel {
+            background-color: white;
+            color: #333;
+            border-color: #ccc;
+        }
+
+        .filter-actions .btn-cancel:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-title">M365 로그인이 필요합니다</div>
+            <div class="auth-desc">
+                Microsoft 365 계정으로 로그인하면 개인 정산 데이터를 확인할 수 있습니다.<br><br>
+                <strong>⚠️ 주의사항:</strong><br>
+                이 애플리케이션은 서버가 필요합니다. 서버가 실행 중이어야 데이터를 조회할 수 있습니다.<br>
+                서버 실행 방법: 프로젝트 폴더에서 "node server.js" 명령어를 실행하세요.
+            </div>
+            <button id="m365-login-btn" class="btn btn-primary">Microsoft 365로 로그인</button>
+        </div>
+    </div>
+
+
+    <div id="app-root" style="display: block;">
+        <header class="header">
+            <div class="header-container">
+                <div class="logo-section">
+                    <img src="Suprema_logo_basic_burgundy.jpg" alt="suprema" class="logo-image" />
+                </div>
+                <h1 class="header-title">개인정산 조회</h1>
+                <div class="header-actions">
+                    <span id="current-user-display" class="user-display" style="display: none; margin-right: 10px; font-weight: 500; color: #2c3e50;"></span>
+                    <button id="test-user-btn" class="btn btn-outline btn-small">테스트 사용자</button>
+                    <button id="logout-btn" class="btn btn-secondary btn-small">로그아웃</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section id="user-view">
+            <section class="query-section">
+                <div class="query-container">
+                    <div class="query-period">
+                        <label>조회기간</label>
+                        <input id="period" type="hidden" value="2025-01 ~ 2025-12" />
+                        <div class="select-group">
+                            <select id="start-year"></select>
+                            <select id="start-month"></select>
+                            <span>~</span>
+                            <select id="end-year"></select>
+                            <select id="end-month"></select>
+                        </div>
+                    </div>
+                    <div class="query-buttons">
+                        <button id="query-btn" class="btn btn-primary">조회</button>
+                        <button id="reset-period-btn" class="btn btn-secondary" type="button">초기화</button>
+                    </div>
+                </div>
+                </section>
+
+                <section class="summary-section">
+                <h2 class="section-title">월별 정산/미정산 요약</h2>
+                <div class="summary-container">
+                        <div class="left-column-wrapper">
+                            <div class="summary-table-container">
+                            <div class="table-header">
+                                <span class="table-title">월별 정산 요약</span>
+                                <button id="monthly-summary-download-btn" class="btn btn-secondary btn-small">다운로드</button>
+                            </div>
+                            <table id="monthly-summary-table" class="summary-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-column="month">정산월</th>
+                                        <th class="sortable" data-column="amount">정산금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="monthly-summary-tbody">
+                                    <tr>
+                                        <td colspan="2" class="table-placeholder">조회 결과가 없습니다.</td>
+                                    </tr>
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>정산 금액 합계</td>
+                                        <td id="total-settled">0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="unsettled-right-column">
+                        <div class="unsettled-total-card">
+                            <div class="unsettled-total-header">미정산 금액</div>
+                            <div id="unsettled-total-value" class="unsettled-total-value">0</div>
+                        </div>
+                    </div>
+                </div>
+                </section>
+
+                <section class="detail-section">
+                <h2 class="section-title">월별 정산/미정산 상세</h2>
+                <div class="detail-container">
+                    <div class="detail-table-container">
+                        <div class="table-header">
+                            <span class="table-title">월 정산 상세 내역</span>
+                            <button id="settled-download-btn" class="btn btn-secondary btn-small">다운로드</button>
+                        </div>
+                        <table id="settled-detail-table" class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable filterable" data-column="month">
+                                        <span>정산월</span>
+                                        <svg class="filter-icon" data-column="month" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="paymentDate">
+                                        <span>지급일</span>
+                                        <svg class="filter-icon" data-column="paymentDate" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="merchant">
+                                        <span>사용처</span>
+                                        <svg class="filter-icon" data-column="merchant" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="accountName">
+                                        <span>계정명</span>
+                                        <svg class="filter-icon" data-column="accountName" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="amount">
+                                        <span>정산금액</span>
+                                        <svg class="filter-icon" data-column="amount" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="note">
+                                        <span>비고</span>
+                                        <svg class="filter-icon" data-column="note" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="settled-detail-tbody">
+                                <tr>
+                                    <td colspan="6" class="table-placeholder">조회 결과가 없습니다.</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td class="total-title">정산 금액 합계</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td id="totalAmountCell" class="amount-cell"></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="detail-table-container">
+                        <div class="table-header">
+                            <span class="table-title">미정산 상세 내역 (익월 정산)</span>
+                            <button id="unsettled-download-btn" class="btn btn-secondary btn-small">다운로드</button>
+                        </div>
+                        <table id="unsettled-detail-table" class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable filterable" data-column="month">
+                                        <span>정산월</span>
+                                        <svg class="filter-icon" data-column="month" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="paymentDate">
+                                        <span>지급예정일</span>
+                                        <svg class="filter-icon" data-column="paymentDate" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="merchant">
+                                        <span>사용처</span>
+                                        <svg class="filter-icon" data-column="merchant" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="accountName">
+                                        <span>계정명</span>
+                                        <svg class="filter-icon" data-column="accountName" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="amount">
+                                        <span>정산금액</span>
+                                        <svg class="filter-icon" data-column="amount" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                    <th class="sortable filterable" data-column="note">
+                                        <span>비고</span>
+                                        <svg class="filter-icon" data-column="note" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
+                                            <path d="M1 2L6 7L11 2" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <rect x="4.5" y="8" width="3" height="2" stroke="#666" stroke-width="1" fill="none"/>
+                                        </svg>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="unsettled-detail-tbody">
+                                <tr>
+                                    <td colspan="6" class="table-placeholder">조회 결과가 없습니다.</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td class="total-title">미정산 금액 합계</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td id="total-unsettled-detail" class="amount-cell"></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                </section>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+    <script defer src="script.js?v=20250106"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const periodInput = document.getElementById('period');
+            const startYearSelect = document.getElementById('start-year');
+            const startMonthSelect = document.getElementById('start-month');
+            const endYearSelect = document.getElementById('end-year');
+            const endMonthSelect = document.getElementById('end-month');
+            const resetBtn = document.getElementById('reset-period-btn');
+            const userView = document.getElementById('user-view');
+
+            const years = ['2025'];
+            const startYears = ['2024', '2025'];
+            const months = Array.from({ length: 12 }, (_, idx) => String(idx + 1).padStart(2, '0'));
+
+            function populateSelect(select, values) {
+                values.forEach((value) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = value;
+                    select.appendChild(option);
+                });
+            }
+
+            populateSelect(startYearSelect, startYears);
+            populateSelect(endYearSelect, years);
+            populateSelect(startMonthSelect, months);
+            populateSelect(endMonthSelect, months);
+
+            function updatePeriodInput() {
+                const startYear = startYearSelect.value;
+                const startMonth = startMonthSelect.value;
+                const endYear = endYearSelect.value;
+                const endMonth = endMonthSelect.value;
+                if (periodInput) {
+                    periodInput.value = `${startYear}-${startMonth} ~ ${endYear}-${endMonth}`;
+                }
+            }
+
+            [startYearSelect, startMonthSelect, endYearSelect, endMonthSelect].forEach((select) => {
+                select.addEventListener('change', updatePeriodInput);
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    startYearSelect.value = startYears[0];
+                    endYearSelect.value = years[0];
+                    startMonthSelect.value = '01';
+                    endMonthSelect.value = '12';
+                    updatePeriodInput();
+                });
+            }
+
+            // 초기 값 설정
+            startYearSelect.value = startYears[0];
+            endYearSelect.value = years[0];
+            startMonthSelect.value = '01';
+            endMonthSelect.value = '12';
+            updatePeriodInput();
+
+            if (typeof loadExcelSheets === 'function') {
+                loadExcelSheets();
+            }
+        });
+    </script>
+</body>
+</html>
