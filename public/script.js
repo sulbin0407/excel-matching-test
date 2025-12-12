@@ -46,6 +46,17 @@ function getApiBaseUrl() {
     const hostname = window.location.hostname;
     const port = window.location.port;
     
+    // Render 또는 다른 클라우드 호스팅 환경 감지 (포트가 없거나 80/443인 경우)
+    // 클라우드 호스팅에서는 포트 번호를 명시하지 않음
+    const isCloudHosting = !port || port === '' || port === '80' || port === '443' || hostname.includes('onrender.com') || hostname.includes('vercel.app') || hostname.includes('netlify.app');
+    
+    if (isCloudHosting) {
+        // 클라우드 호스팅: 포트 번호 없이 사용
+        const baseUrl = `${protocol}//${hostname}`;
+        console.log('📍 API 베이스 URL (클라우드 호스팅):', baseUrl);
+        return baseUrl;
+    }
+    
     // Live Server (포트 5500) 또는 다른 정적 파일 서버 포트를 사용하는 경우
     // 서버 포트(3000)로 변경
     const STATIC_FILE_SERVER_PORTS = ['5500', '8080', '8000', '5000'];
@@ -59,15 +70,14 @@ function getApiBaseUrl() {
         return baseUrl;
     }
     
-    // 포트가 있으면 포함, 없으면 기본 포트 사용 (하지만 서버는 3000 포트)
-    // 네트워크 접속 시 포트가 명시되어 있으면 그대로 사용
+    // 로컬 개발 환경: 포트가 있으면 포함
     if (port && port !== '' && port !== '80' && port !== '443') {
         const baseUrl = `${protocol}//${hostname}:${port}`;
-        console.log('📍 API 베이스 URL:', baseUrl);
+        console.log('📍 API 베이스 URL (로컬 개발):', baseUrl);
         return baseUrl;
     }
     
-    // 포트가 없으면 기본값으로 3000 사용 (서버 포트)
+    // 기본값: 포트 3000 사용 (로컬 개발)
     const baseUrl = `${protocol}//${hostname}:3000`;
     console.log('📍 API 베이스 URL (기본 포트 3000):', baseUrl);
     return baseUrl;
