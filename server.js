@@ -5,7 +5,7 @@ import cors from "cors";
 import compression from "compression";
 import { getExcelData, getSheetNames } from "./dataService.js";
 import dotenv from "dotenv";
-import OpenAI from "openai";
+// import OpenAI from "openai"; // OpenAI 기능 제거됨
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
@@ -3528,217 +3528,20 @@ app.post('/api/clear-unsettled-account-cache', (req, res) => {
     }
 });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI 초기화 제거됨
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
 
-app.post("/api/summary", async (req, res) => {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({
-        success: false,
-        error: "OpenAI API 키가 설정되어 있지 않습니다.",
-      });
-    }
+// OpenAI 요약 API 제거됨
+// app.post("/api/summary", async (req, res) => {
+//   ... (OpenAI 요약 로직 제거)
+// });
 
-    const settledDetail = Array.isArray(req.body?.settledDetail) ? req.body.settledDetail : [];
-    const unsettledDetail = Array.isArray(req.body?.unsettledDetail) ? req.body.unsettledDetail : [];
-
-    if (!settledDetail.length && !unsettledDetail.length) {
-      return res.status(400).json({
-        success: false,
-        error: "요약할 데이터가 없습니다.",
-      });
-    }
-
-    const settlementTotal = settledDetail.reduce((sum, item) => sum + parseAmountValue(item?.amount), 0);
-    const unsettledTotal = unsettledDetail.reduce((sum, item) => sum + parseAmountValue(item?.amount), 0);
-    const latestMonth = findLatestSettlementMonth(settledDetail);
-    const topSpending = findTopSpendingCategory(settledDetail);
-
-    const topLabel = topSpending?.label || "정보 없음";
-    const topAmount = topSpending ? formatCurrencyKRW(topSpending.amount) : "0원";
-
-    const modelName = process.env.OPENAI_SUMMARY_MODEL || "gpt-4o-mini";
-
-    const prompt = `
-당신은 개인정산 요약을 만드는 AI입니다.
-
-아래 3개 항목은 반드시 포함하고, 문장 형태로 자연스럽게 요약하세요.
-
-번호를 붙이지 말고 네이버 요약 스타일처럼 자연스럽게 요약합니다.
-
-1. 미정산 총 금액
-
-2. 이번달 지급 금액 (정산 상세 내역 중 가장 최근 month 기준)
-
-3. 이번달에서 가장 큰 금액을 가진 항목의 금액, 계정명, 비고
-
-[정산 상세 데이터]
-
-${JSON.stringify(settledDetail)}
-
-[미정산 데이터]
-
-${JSON.stringify(unsettledDetail)}
-`;
-
-    const completion = await openai.chat.completions.create({
-      model: modelName,
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: "너는 재무 데이터를 간결하게 요약하는 전문 비서이다." },
-        { role: "user", content: prompt },
-      ],
-    });
-
-    const summary = completion.choices?.[0]?.message?.content?.trim();
-
-    if (!summary) {
-      throw new Error("요약 생성에 실패했습니다.");
-    }
-
-    res.json({
-      success: true,
-      summary,
-    });
-  } catch (error) {
-    console.error("❌ 요약 생성 오류:", error);
-    res.status(500).json({
-      success: false,
-      error: "AI 요약 생성 실패",
-    });
-  }
-});
-
-// AI 요약 생성 API
-app.post("/api/ai-summary", async (req, res) => {
-  try {
-    const { userData, userName, user, data } = req.body;
-    const resolvedUserData = userData || data;
-    const resolvedUserName = userName || user || "알수없음";
-    console.log("AI 요약 요청 데이터:", resolvedUserData);
-
-    // 1. 미정산 금액 총합 계산
-    const unsettledTotal = resolvedUserData?.unsettled?.detail?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
-
-    // 2. 가장 최근 지급월 찾기
-    let latestMonth = null;
-    let latestMonthData = [];
-    if (resolvedUserData?.settled?.detail && resolvedUserData.settled.detail.length > 0) {
-      const sortedByDate = [...resolvedUserData.settled.detail].sort((a, b) => {
-        const dateA = a.paymentDate ? new Date(a.paymentDate) : new Date(0);
-        const dateB = b.paymentDate ? new Date(b.paymentDate) : new Date(0);
-        return dateB - dateA; // 내림차순
-      });
-      
-      if (sortedByDate.length > 0) {
-        latestMonth = sortedByDate[0].settlementMonth || sortedByDate[0].month || '';
-        latestMonthData = resolvedUserData.settled.detail.filter(item => {
-          const itemMonth = item.settlementMonth || item.month || '';
-          return itemMonth === latestMonth;
-        });
-      }
-    }
-
-    // 3. 해당 월 정산금액 계산
-    const latestMonthAmount = latestMonthData.reduce((sum, item) => sum + (item.amount || 0), 0);
-
-    // 4. 해당 월 대표 계정명과 비고 (가장 큰 금액의 항목)
-    let representativeAccount = null;
-    let representativeNote = null;
-    if (latestMonthData.length > 0) {
-      const maxAmountItem = latestMonthData.reduce((max, item) => {
-        return (item.amount || 0) > (max.amount || 0) ? item : max;
-      }, latestMonthData[0]);
-      representativeAccount = maxAmountItem.accountName || '';
-      representativeNote = maxAmountItem.note || '';
-    }
-
-    const prompt = `
-아래 데이터는 ${resolvedUserName} 사용자의 개인정산 상세 내역입니다.
-
-네이버 AI요약 스타일로 자연스럽고 간결하게 핵심만 요약해줘.
-아래 4가지 항목을 포함한 한 단락으로 작성해.
-
-필수 포함 항목:
-- 미정산 금액 총합
-- 가장 최근 지급월
-- 해당 지급월의 정산금액
-- 해당 지급월의 대표 계정명과 비고 핵심 요약
-
-출력 예시는 이런 형태로 작성해:
-"김웅희님의 미정산 금액은 총 449,800원이며, 최근 지급월은 2025년 06월입니다. 해당 월 정산금액은 673,325원이며 복리후생비 계정에서 가장 많이 발생했습니다. 비고에는 출장·회식·경조 관련 내용이 많았습니다."
-
-데이터:
-- 미정산 금액 총합: ${unsettledTotal.toLocaleString()}원
-- 가장 최근 지급월: ${latestMonth || '없음'}
-- 해당 월 정산금액: ${latestMonthAmount.toLocaleString()}원
-- 해당 월 대표 계정명: ${representativeAccount || '없음'}
-- 해당 월 대표 비고: ${representativeNote || '없음'}
-    `;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "user", content: prompt }
-      ],
-    });
-
-    const summary = response.choices[0].message.content;
-
-    res.json({
-      success: true,
-      summary,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: "AI 요약 생성 실패" });
-  }
-});
-
-
-// ===============================
-// 📌 AI 요약 API
-// ===============================
-app.post("/api/ai-summary", async (req, res) => {
-  try {
-    const { data, username } = req.body;
-
-    console.log("📡 AI 요약 요청 도착:", username);
-
-    if (!data || !username) {
-      return res.status(400).json({
-        success: false,
-        message: "data 또는 username이 누락되었습니다."
-      });
-    }
-
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "당신은 회계 데이터를 요약하는 전문가입니다." },
-        { role: "user", content: `사용자 ${username} 의 개인정산 데이터를 요약해줘:\n${JSON.stringify(data)}` }
-      ]
-    });
-
-    const summary = completion.choices[0].message.content;
-
-    res.json({
-      success: true,
-      summary
-    });
-
-  } catch (error) {
-    console.error("❌ AI 요약 오류:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+// OpenAI AI 요약 API 제거됨
+// app.post("/api/ai-summary", async (req, res) => {
+//   ... (OpenAI 요약 로직 제거)
+// });
 
 // 🔥 전역 에러 핸들러 추가 (서버가 끊기는 것을 방지)
 process.on('uncaughtException', (error) => {
